@@ -1,8 +1,6 @@
 import unittest
 
-# Fungsi yang akan diuji
-def tambah(a, b):
-    return a + b
+
 
 class TestTambah(unittest.TestCase):
     
