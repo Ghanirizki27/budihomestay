@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login dengan Tali Lampu</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #0a0b0d; /* Sangat gelap saat lampu mati */
+            font-family: sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* --- DESAIN LAMPU GANTUNG --- */
+        .lamp-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        /* Kabel Lampu */
+        .wire {
+            width: 4px;
+            height: 120px;
+            background-color: #333;
+        }
+
+        /* Kap Lampu */
+        .lamp-shade {
+            width: 100px;
+            height: 40px;
+            background-color: #2c303a;
+            border-radius: 50px 50px 0 0;
+            position: relative;
+        }
+
+        /* Bohlam Lampu */
+        .bulb {
+            width: 50px;
+            height: 50px;
+            background-color: #222; /* Gelap saat mati */
+            border-radius: 50%;
+            position: absolute;
+            bottom: -25px;
+            left: 25px;
+            z-index: -1;
+            transition: all 0.3s ease;
+        }
+
+        /* Tali Saklar (Pull String) */
+        .pull-string {
+            position: absolute;
+            right: 15px;
+            top: 20px;
+            width: 3px;
+            height: 100px;
+            background-color: #777;
+            cursor: pointer;
+            transform-origin: top;
+            transition: transform 0.1s; /* Efek memantul saat ditarik */
+        }
+
+        /* Bandul di ujung tali */
+        .pull-string::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: -4.5px;
+            width: 12px;
+            height: 12px;
+            background-color: #ff9800;
+            border-radius: 50%;
+        }
+
+        /* Efek saat tali ditarik (diklik) */
+        .pull-string:active {
+            transform: scaleY(1.3); 
+        }
+
+        /* --- EFEK SAAT LAMPU MENYALA --- */
+        body[data-on="true"] .bulb {
+            background-color: #ffe600; /* Kuning terang */
+            box-shadow: 0 0 80px 30px rgba(206, 187, 14, 0.4), 
+                        0 0 200px 80px rgba(189, 171, 40, 0.2);
+        }
+
+        /* --- DESAIN FORM LOGIN --- */
+        .login-form {
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            width: 300px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            
+            /* Posisi awal sebelum nyala */
+            opacity: 0;
+            transform: translateY(50px);
+            pointer-events: none;
+            margin-top: 100px; /* Jarak dari lampu */
+        }
+
+        .login-form input {
+            display: block;
+            width: 100%;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .login-form button:hover {
+            background-color: #e68a00;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lamp-container">
+        <div class="wire"></div>
+        <div class="lamp-shade">
+            <div class="bulb"></div>
+            <div class="pull-string" onclick="toggleLamp()"></div>
+        </div>
+    </div>
+
+    <div class="login-form">
+        <h2 style="margin-top: 0;">Selamat Datang</h2>
+        <input type="text" placeholder="Username">
+        <input type="password" placeholder="Password">
+        <button>Masuk</button>
+    </div>
+
+    <script>
+        let ison = false;
+        const body = document.body;
+        const loginForm = document.querySelector('.login-form');
+        
+        // Opsional: Anda bisa tambahkan suara 'klik' saklar di sini
+        // const clickSound = new Audio('switch.mp3');
+
+        function toggleLamp() {
+            ison = !ison; // Toggle state
+            
+            // clickSound.play(); // Nyalakan jika punya file audio
+
+            // Set atribut untuk mentrigger CSS bohlam menyala
+            body.setAttribute('data-on', ison);
+
+            if (ison) {
+                // Saat Lampu Nyala: Background sedikit terang, form muncul
+                gsap.to(body, { backgroundColor: "#1c1f24", duration: 0.4 });
+                gsap.to(loginForm, { 
+                    opacity: 1, 
+                    y: 0, 
+                    duration: 0.6, 
+                    ease: "back.out(1.7)", 
+                    pointerEvents: "auto",
+                    delay: 0.1 // Sedikit delay agar lampu nyala duluan
+                });
+            } else {
+                // Saat Lampu Mati: Background gelap gulita, form tenggelam
+                gsap.to(body, { backgroundColor: "#0a0b0d", duration: 0.4 });
+                gsap.to(loginForm, { 
+                    opacity: 0, 
+                    y: 50, 
+                    duration: 0.4, 
+                    ease: "power2.in", 
+                    pointerEvents: "none" 
+                });
+            }
+        }
+    </script>
+</body>
+</html>
