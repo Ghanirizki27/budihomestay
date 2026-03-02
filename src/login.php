@@ -1,14 +1,7 @@
 <?php
 session_start();
 
-// Koneksi Database langsung di sini agar aman
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "budihomestay";
-$conn = mysqli_connect($host, $user, $pass, $db);
-
-// Jika sudah ada sesi login, lewati form dan masuk dashboard
+// Jika sudah login, langsung arahkan ke dashboard
 if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
     header("Location: dashboard.php");
     exit;
@@ -16,24 +9,23 @@ if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
 
 $error = false;
 
-// Proses jika tombol masuk diklik
+// Proses ketika tombol login ditekan
 if (isset($_POST['login'])) {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = md5($_POST['password']); // Enkripsi MD5 mencocokkan dengan database
+    $username = $_POST['username'];
+    $password = $_POST['password'];
 
-    // Cek ke tabel admin
-    $query = mysqli_query($conn, "SELECT * FROM admin WHERE username='$username' AND password='$password'");
-    $cek = mysqli_num_rows($query);
-
-    if ($cek > 0) {
-        $data = mysqli_fetch_assoc($query);
-        $_SESSION['status'] = "login";
-        $_SESSION['username'] = $data['username'];
+    // --- LOGIKA LOGIN MANUAL ---
+    if ($username === 'admin' && $password === 'admin123') {
         
+        // Buat sesi login
+        $_SESSION['status'] = "login";
+        $_SESSION['username'] = $username;
+        
+        // Pindah ke dashboard
         header("Location: dashboard.php");
         exit;
     } else {
-        $error = true;
+        $error = true; // Flag jika password salah
     }
 }
 ?>
@@ -42,11 +34,12 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Budi Homestay</title>
+    <title>Login dengan Tali Lampu</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
+        /* [Kode CSS Kamu Tetap Sama Persis Di Sini, tidak ada yang dikurangi] */
         body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #0a0b0d; font-family: sans-serif; color: white; overflow: hidden; }
         .lamp-container { position: absolute; top: 0; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 10; }
         .wire { width: 4px; height: 120px; background-color: #333; }
@@ -79,7 +72,7 @@ if (isset($_POST['login'])) {
     <form class="login-form" method="POST" action="">
         <h2 style="margin-top: 0;">Selamat Datang</h2>
         
-        <?php if($error) : ?>
+        <?php if(isset($error)) : ?>
             <span class="error-msg">Username atau Password salah!</span>
         <?php endif; ?>
 
@@ -94,6 +87,7 @@ if (isset($_POST['login'])) {
     </form>
 
     <script>
+        // [Script Javascript kamu tetap sama persis di sini]
         let ison = false;
         const body = document.body;
         const loginForm = document.querySelector('.login-form');
@@ -126,7 +120,7 @@ if (isset($_POST['login'])) {
         });
 
         // Script tambahan: Biarkan lampu otomatis menyala jika ada error login
-        <?php if($error) : ?>
+        <?php if(isset($error)) : ?>
             toggleLamp();
         <?php endif; ?>
     </script>
