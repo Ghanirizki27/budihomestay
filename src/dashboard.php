@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (!isset($_SESSION['status'])) {
+    header("Location: login.php");
+    exit;
+}
 
 // Jika belum login, tendang ke index.php
 if (!isset($_SESSION['status']) || $_SESSION['status'] != "login") {
@@ -209,6 +213,9 @@ $total_penghuni = mysqli_num_rows($penghuni);
 
         <a href="laporan.php" class="<?= ($halaman == 'laporan.php') ? 'active' : ''; ?>">
             <i class="fa-solid fa-chart-column"></i> Laporan
+        </a>
+        <a href="peraturan.php" class="<?= ($halaman == 'peraturan.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Peraturan Kos
         </a>
     </div>
 

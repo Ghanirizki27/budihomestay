@@ -14,8 +14,43 @@ if (isset($_POST['login'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // --- LOGIKA LOGIN MANUAL ---
-    if ($username === 'admin' && $password === 'admin123') {
+
+session_start();
+include "koneksi.php"; // pastikan file koneksi sudah ada
+
+// Jika sudah login
+if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
+    header("Location: dashboard.php");
+    exit;
+}
+
+$error = false;
+
+if (isset($_POST['login'])) {
+
+    $username = $_POST['username'];
+    $password = md5($_POST['password']); // karena database pakai md5
+
+    // Cek ke database
+    $query = mysqli_query($conn, "SELECT * FROM admin WHERE username='$username' AND password='$password'");
+    $cek = mysqli_num_rows($query);
+
+    if ($cek > 0) {
+
+        $data = mysqli_fetch_assoc($query);
+
+        $_SESSION['status'] = "login";
+        $_SESSION['id_admin'] = $data['id_admin'];
+        $_SESSION['username'] = $data['username'];
+        $_SESSION['nama'] = $data['nama_lengkap'];
+
+        header("Location: dashboard.php");
+        exit;
+
+    } else {
+        $error = true;
+    }
+}
         
         // Buat sesi login
         $_SESSION['status'] = "login";
@@ -27,7 +62,7 @@ if (isset($_POST['login'])) {
     } else {
         $error = true; // Flag jika password salah
     }
-}
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -97,7 +132,7 @@ if (isset($_POST['login'])) {
             body.setAttribute('data-on', ison);
 
             if (ison) {
-                gsap.to(body, { backgroundColor: "#1c1f24", duration: 0.4 });
+                gsap.to(body, { backgroundColor: "#1c60d6", duration: 0.4 });
                 gsap.to(loginForm, { 
                     opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.7)", pointerEvents: "auto", delay: 0.1
                 });
