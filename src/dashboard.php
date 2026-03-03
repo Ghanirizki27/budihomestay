@@ -227,11 +227,18 @@ $total_penghuni = mysqli_num_rows($penghuni);
 </div>
 
 <div class="main">
-    <div class="header">
-        <i class="fa-solid fa-house"></i>
-        <div>
-            <h1 style="margin:0;">Dashboard</h1>
-            <p style="margin:0;">Selamat Datang, <?php echo $_SESSION['username']; ?> di Budi Homestay</p>
+   <div class="header">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <i class="fa-solid fa-house"></i>
+            <div>
+                <h1 style="margin:0;">Dashboard</h1>
+                <p style="margin:0;">Selamat Datang, <?php echo $_SESSION['username']; ?> di Budi Homestay</p>
+            </div>
+        </div>
+
+        <div style="margin-left: auto; text-align: right; position: relative; z-index: 1;">
+            <div id="tanggal" style="font-size: 16px; font-weight: 500; opacity: 0.9;"></div>
+            <div id="waktu" style="font-size: 28px; font-weight: bold; margin-top: 5px;"></div>
         </div>
     </div>
 
@@ -255,6 +262,30 @@ $total_penghuni = mysqli_num_rows($penghuni);
         </div>
     </div>
 </div>
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        
+        // Setting Format Tanggal Indonesia (Contoh: Senin, 2 Maret 2026)
+        const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const tanggalLengkap = now.toLocaleDateString('id-ID', optionsDate);
+        
+        // Setting Format Waktu (Contoh: 12:05:41)
+        const jam = now.getHours().toString().padStart(2, '0');
+        const menit = now.getMinutes().toString().padStart(2, '0');
+        const detik = now.getSeconds().toString().padStart(2, '0');
+        const waktuLengkap = jam + ':' + menit + ':' + detik + ' WIB';
+        
+        // Menampilkan ke HTML
+        document.getElementById('tanggal').innerText = tanggalLengkap;
+        document.getElementById('waktu').innerText = waktuLengkap;
+    }
+    
+    // Panggil fungsi pertama kali agar tidak ada jeda kosong 1 detik
+    updateDateTime();
+    // Jalankan fungsi updateDateTime setiap 1000 milidetik (1 detik)
+    setInterval(updateDateTime, 1000);
+</script>
 
 </body>
 </html>
