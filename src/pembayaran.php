@@ -234,22 +234,40 @@ th {
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-    <div>
+    <div class="menu-atas">
         <h2><i class="fa-solid fa-house"></i> Budi Homestay</h2>
-        <a href="dashboard.php"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-        <a href="kamar.php"><i class="fa-solid fa-bed"></i> Data Kamar</a>
-        <a href="penghuni.php"><i class="fa-solid fa-users"></i> Data Penghuni</a>
-        <a href="pembayaran.php"><i class="fa-solid fa-money-bill-wave"></i> Pembayaran</a>
-        <a href="laporan.php"><i class="fa-solid fa-chart-line"></i> Laporan</a>
-        <a href="peraturan.php"><i class="fa-solid fa-list-check"></i> Peraturan Kos</a>
+
+        <a href="dashboard.php" class="<?= ($halaman == 'dashboard.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-gauge"></i> Dashboard
+        </a>
+
+        <a href="kamar.php" class="<?= ($halaman == 'kamar.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-bed"></i> Data Kamar
+        </a>
+
+        <a href="penghuni.php" class="<?= ($halaman == 'penghuni.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-users"></i> Data Penghuni
+        </a>
+
+        <a href="pembayaran.php" class="<?= ($halaman == 'pembayaran.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-money-bill-wave"></i> Pembayaran
+        </a>
+
+        <a href="laporan.php" class="<?= ($halaman == 'laporan.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Laporan
+        </a>
+        <a href="Peraturan kost.php" class="<?= ($halaman == 'Peraturan kost.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Peraturan Kost
+        </a>
     </div>
 
     <div class="menu-bawah">
-        <a href="logout.php">
+        <a href="logout.php" class="logout">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
         </a>
     </div>
 </div>
+
 
 <!-- MAIN -->
 <div class="main">
