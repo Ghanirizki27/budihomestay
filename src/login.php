@@ -59,7 +59,7 @@ if (isset($_POST['login'])) {
             font-family: sans-serif; 
             color: white; 
             overflow: hidden; 
-            transition: background 0.5s ease; /* Transisi halus */
+            transition: background 0.1s ease; /* Transisi halus */
         }
 
         /* [LAMPU MENYALA] Foto muncul */
