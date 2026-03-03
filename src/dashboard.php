@@ -214,8 +214,8 @@ $total_penghuni = mysqli_num_rows($penghuni);
         <a href="laporan.php" class="<?= ($halaman == 'laporan.php') ? 'active' : ''; ?>">
             <i class="fa-solid fa-chart-column"></i> Laporan
         </a>
-        <a href="peraturan.php" class="<?= ($halaman == 'peraturan.php') ? 'active' : ''; ?>">
-            <i class="fa-solid fa-chart-column"></i> Peraturan Kos
+        <a href="Peraturan kost.php" class="<?= ($halaman == 'Peraturan kost.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Peraturan Kost
         </a>
     </div>
 
