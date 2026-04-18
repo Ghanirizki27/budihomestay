@@ -20,7 +20,7 @@ if (isset($_POST['tambah'])) {
     $tgl    = $_POST['tanggal'];
 
     mysqli_query($conn, "
-        INSERT INTO penghuni
+        INSERT INTO penyewa
         (nama_penghuni, no_ktp, no_hp, alamat, id_kamar, tanggal_masuk)
         VALUES
         ('$nama', '$ktp', '$hp', '$alamat', '$kamar', '$tgl')
@@ -28,7 +28,7 @@ if (isset($_POST['tambah'])) {
 
     mysqli_query($conn, "
         UPDATE kamar
-        SET status='Terisi'
+        SET status='Ditempati'
         WHERE id_kamar='$kamar'
     ");
 
@@ -45,8 +45,8 @@ if (isset($_GET['hapus'])) {
 
     $ambil = mysqli_query($conn, "
         SELECT id_kamar
-        FROM penghuni
-        WHERE id_penghuni='$id'
+        FROM penyewa
+        WHERE id_penyewa='$id'
     ");
 
     $dataKamar = mysqli_fetch_assoc($ambil);
@@ -71,9 +71,9 @@ if (isset($_GET['hapus'])) {
    AMBIL DATA
 ========================= */
 $dataPenghuni = mysqli_query($conn, "
-    SELECT penghuni.*, kamar.kode_kamar
-    FROM penghuni
-    JOIN kamar ON penghuni.id_kamar = kamar.id_kamar
+    SELECT penyewa.*, kamar.nomor_kamar 
+    FROM penyewa 
+    JOIN kamar ON penyewa.id_kamar = kamar.id_kamar
 ");
 
 $dataKamarKosong = mysqli_query($conn, "
@@ -278,7 +278,7 @@ th {
                 <option value="">Pilih Kamar Kosong</option>
                 <?php while($k = mysqli_fetch_assoc($dataKamarKosong)) { ?>
                     <option value="<?= $k['id_kamar']; ?>">
-                        <?= $k['kode_kamar']; ?>
+                        <?= $row['nomor_kamar']; ?>
                     </option>
                 <?php } ?>
             </select>
@@ -310,7 +310,7 @@ th {
                 <td><?= $row['no_ktp']; ?></td>
                 <td><?= $row['no_hp']; ?></td>
                 <td><?= $row['alamat']; ?></td>
-                <td><?= $row['kode_kamar']; ?></td>
+                <td><?= $k['nomor_kamar']; ?></td>
                 <td><?= $row['tanggal_masuk']; ?></td>
                 <td>
                     <a href="?hapus=<?= $row['id_penghuni']; ?>"

@@ -16,8 +16,8 @@ $total_kamar = mysqli_num_rows($kamar);
 $kosong = mysqli_query($conn, "SELECT * FROM kamar WHERE status='Kosong'");
 $total_kosong = mysqli_num_rows($kosong);
 
-$penghuni = mysqli_query($conn, "SELECT * FROM penghuni");
-$total_penghuni = mysqli_num_rows($penghuni);
+$penyewa = mysqli_query($conn, "SELECT * FROM penyewa");
+$total_penghuni = mysqli_num_rows($penyewa);
 
 // Penyewa aktif (sementara = total penghuni)
 $total_aktif = $total_penghuni;
@@ -26,9 +26,10 @@ $total_aktif = $total_penghuni;
    PEMASUKAN BULAN INI
 ====================== */
 $pemasukan = mysqli_query($conn, "
-    SELECT SUM(jumlah_bayar) as total 
-    FROM pembayaran 
-    WHERE MONTH(tanggal_bayar)=MONTH(CURDATE())
+    SELECT SUM(jumlah) as total 
+    FROM transaksi_keuangan 
+    WHERE jenis='Pemasukan'
+    AND MONTH(tanggal)=MONTH(CURDATE())
 ");
 
 $data_pemasukan = mysqli_fetch_assoc($pemasukan);
@@ -43,8 +44,10 @@ $total_keluhan = 0;
 <head>
     <title>Dashboard - Budi Homestay</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 <style>
+    
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
@@ -158,6 +161,42 @@ body {
     font-weight: bold;
     color: #0f2f59;
 }
+/* ================= RESPONSIVE HP ================= */
+@media (max-width: 765px) {
+
+    .sidebar {
+        width: 65%; /* hampir full layar */
+        left: -65%;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    .main {
+        padding: 20px;
+    }
+
+    .main.shift {
+        margin-left: 0; /* biar konten ga geser di HP */
+}
+
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    top: 0;
+    left: 0;
+    display: none;
+    z-index: 999;
+}
+
+.overlay.active {
+    display: block;
+}
+
+}
 </style>
 </head>
 
@@ -246,21 +285,13 @@ body {
 <script>
 function toggleSidebar() {
     document.getElementById("sidebar").classList.toggle("active");
-    document.getElementById("main").classList.toggle("shift");
+    document.getElementById("overlay").classList.toggle("active");
 }
 
-// WAKTU
-function updateDateTime() {
-    const now = new Date();
-
-    const tanggal = now.toLocaleDateString('id-ID', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
-
-    const waktu = now.toLocaleTimeString('id-ID') + " WIB";
-
-    document.getElementById('tanggal').innerText = tanggal;
-    document.getElementById('waktu').innerText = waktu;
+// KHUSUS UNTUK NUTUP
+function closeSidebar() {
+    document.getElementById("sidebar").classList.remove("active");
+    document.getElementById("overlay").classList.remove("active");
 }
 
 updateDateTime();
