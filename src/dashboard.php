@@ -209,10 +209,10 @@ body {
 
         <a href="dashboard.php"><i class="fa-solid fa-gauge"></i> Dashboard</a>
         <a href="kamar.php"><i class="fa-solid fa-bed"></i> Data Kamar</a>
-        <a href="penghuni.php"><i class="fa-solid fa-users"></i> Data Penghuni</a>
+        <a href="penghuni.php"><i class="fa-solid fa-users"></i> Data Penyewa</a>
         <a href="pembayaran.php"><i class="fa-solid fa-money-bill-wave"></i> Pembayaran</a>
-        <a href="laporan.php"><i class="fa-solid fa-chart-column"></i> Laporan</a>
-        <a href="peraturan.php"><i class="fa-solid fa-book"></i> Peraturan Kost</a>
+        <a href="laporan.php"><i class="fa-solid fa-chart-column"></i> Laporan Keuangan</a>
+        <a href="peraturan.php"><i class="fa-solid fa-book"></i> Pengumuman</a>
     </div>
 
     <div class="menu-bawah">

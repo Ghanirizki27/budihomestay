@@ -2,8 +2,13 @@
 session_start();
 include "koneksi.php";
 
+// 1. Cek jika sudah login, arahkan ke halaman yang benar sesuai role-nya
 if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
-    header("Location: dashboard.php");
+    if ($_SESSION['role'] == 'admin') {
+        header("Location: dashboard.php");
+    } else if ($_SESSION['role'] == 'penyewa') {
+        header("Location: home_penyewa.php"); // Ganti dengan nama file mobile kamu
+    }
     exit;
 }
 
@@ -12,7 +17,7 @@ $error = false;
 if (isset($_POST['login'])) {
 
     $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = md5($_POST['password']);
+    $password = md5($_POST['password']); // Menggunakan MD5 sesuai screenshot database kamu
 
     $query = mysqli_query($conn, "SELECT * FROM admin WHERE username='$username' AND password='$password'");
     
@@ -20,12 +25,22 @@ if (isset($_POST['login'])) {
 
         $data = mysqli_fetch_assoc($query);
 
+        // Pastikan kolom 'role' di database TIDAK NULL agar logika ini berjalan
         $_SESSION['status'] = "login";
         $_SESSION['id_admin'] = $data['id_admin'];
         $_SESSION['username'] = $data['username'];
         $_SESSION['nama'] = $data['nama_lengkap'];
+        $_SESSION['role'] = $data['role'];
 
-        header("Location: dashboard.php");
+        // 2. Logika Pembeda Akses saat berhasil login 
+        if ($data['role'] == 'admin') {
+            header("Location: dashboard.php");
+        } else if ($data['role'] == 'penyewa') {
+            header("Location: home_penyewa.php"); // Arahkan ke halaman khusus penyewa
+        } else {
+            // Jika role tidak dikenal atau NULL
+            $error = true;
+        }
         exit;
 
     } else {
