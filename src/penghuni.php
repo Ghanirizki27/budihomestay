@@ -1,66 +1,32 @@
 <?php
-include "koneksi.php";
 session_start();
+include_once "auth.php";
+requireRole('admin');
+include "koneksi.php";
+include_once "admin_nav.php";
+include_once "db_migrations.php";
 
-if (!isset($_SESSION['status']) || $_SESSION['status'] != "login") {
-    header("Location: index.php");
-    exit;
-}
-
-/* =========================
-   TAMBAH PENGHUNI
-========================= */
-if (isset($_POST['tambah'])) {
-
-    $nama   = $_POST['nama'];
-    $ktp    = $_POST['ktp'];
-    $hp     = $_POST['hp'];
-    $alamat = $_POST['alamat'];
-    $kamar  = $_POST['kamar'];
-    $tgl    = $_POST['tanggal'];
-
-    mysqli_query($conn, "
-        INSERT INTO penghuni
-        (nama_penghuni, no_ktp, no_hp, alamat, id_kamar, tanggal_masuk)
-        VALUES
-        ('$nama', '$ktp', '$hp', '$alamat', '$kamar', '$tgl')
-    ");
-
-    mysqli_query($conn, "
-        UPDATE kamar
-        SET status='Terisi'
-        WHERE id_kamar='$kamar'
-    ");
-
-    header("Location: penghuni.php");
-    exit;
-}
+ensureAppSchema($conn);
 
 /* =========================
-   HAPUS PENGHUNI
+   HAPUS
 ========================= */
 if (isset($_GET['hapus'])) {
 
     $id = $_GET['hapus'];
 
+    mysqli_query($conn, "DELETE FROM admin WHERE id_penyewa='$id' AND role='penyewa'");
+
     $ambil = mysqli_query($conn, "
-        SELECT id_kamar
-        FROM penghuni
-        WHERE id_penghuni='$id'
+        SELECT id_kamar FROM penyewa WHERE id_penyewa='$id'
     ");
+    $data = mysqli_fetch_assoc($ambil);
 
-    $dataKamar = mysqli_fetch_assoc($ambil);
-    $id_kamar  = $dataKamar['id_kamar'];
+    mysqli_query($conn, "DELETE FROM penyewa WHERE id_penyewa='$id'");
 
     mysqli_query($conn, "
-        DELETE FROM penghuni
-        WHERE id_penghuni='$id'
-    ");
-
-    mysqli_query($conn, "
-        UPDATE kamar
-        SET status='Kosong'
-        WHERE id_kamar='$id_kamar'
+        UPDATE kamar SET status='Kosong'
+        WHERE id_kamar='".$data['id_kamar']."'
     ");
 
     header("Location: penghuni.php");
@@ -68,167 +34,245 @@ if (isset($_GET['hapus'])) {
 }
 
 /* =========================
-   AMBIL DATA
+   DATA
 ========================= */
-$dataPenghuni = mysqli_query($conn, "
-    SELECT penghuni.*, kamar.kode_kamar
-    FROM penghuni
-    JOIN kamar ON penghuni.id_kamar = kamar.id_kamar
+$dataPenyewa = mysqli_query($conn, "
+    SELECT penyewa.*, kamar.nomor_kamar, kamar.harga, admin.username
+    FROM penyewa
+    LEFT JOIN kamar ON penyewa.id_kamar = kamar.id_kamar
+    LEFT JOIN admin ON admin.id_penyewa = penyewa.id_penyewa AND admin.role='penyewa'
+    ORDER BY penyewa.id_penyewa DESC
 ");
 
-$dataKamarKosong = mysqli_query($conn, "
-    SELECT *
-    FROM kamar
-    WHERE status='Kosong'
-");
+$flashPenyewa = $_SESSION['flash_penyewa'] ?? null;
+unset($_SESSION['flash_penyewa']);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Data Penghuni - Budi Homestay</title>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="UTF-8">
+<title>Data Penyewa</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-
-/* ================= GLOBAL ================= */
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #eaf3ff, #f8fbff);
 }
 
-/* ================= SIDEBAR ================= */
+/* SIDEBAR */
 .sidebar {
     width: 250px;
     height: 100vh;
     background: linear-gradient(180deg, #0f2f59, #123d75);
     position: fixed;
+    left: -250px;
+    top: 0;
+    transition: 0.3s;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+}
+
+.sidebar.active {
+    left: 0;
 }
 
 .sidebar h2 {
     color: white;
     text-align: center;
-    padding: 20px 10px;
-    margin: 0;
-    font-size: 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 20px;
 }
 
 .sidebar a {
     display: flex;
-    align-items: center;
     gap: 12px;
     padding: 14px 20px;
     color: #dbe9ff;
     text-decoration: none;
-    transition: 0.3s ease;
 }
 
 .sidebar a:hover {
-    background: rgba(255,255,255,0.08);
-    padding-left: 28px;
+    background: rgba(255,255,255,0.1);
 }
 
-.menu-bawah a {
+.sidebar a.active {
+    background: rgba(255,255,255,0.14);
+    color: #ffffff;
+    margin: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+}
+
+ .menu-bawah a {
     background: #0d2c54;
 }
 
-/* ================= MAIN ================= */
-.main {
-    margin-left: 250px;
-    padding: 35px;
+.menu-bawah a.active {
+    margin: 0;
+    border-radius: 0;
+    border: none;
 }
 
-/* ================= HEADER BIRU ================= */
+/* MAIN */
+.main {
+    margin-left: 0;
+    padding: 35px;
+    transition: 0.3s;
+}
+
+.main.shift {
+    margin-left: 250px;
+}
+
+/* HEADER */
 .header {
-    position: relative;
     background: linear-gradient(90deg, #4da6ff, #2f80ed);
     color: white;
-    padding: 30px;
+    padding: 20px;
     border-radius: 18px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    box-shadow: 0 15px 30px rgba(47,128,237,0.25);
-    overflow: hidden;
-    margin-bottom: 30px;
+    justify-content: space-between;
 }
 
-.header i {
-    font-size: 45px;
+/* MENU ICON */
+.menu-icon {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 10px;
+    border-radius: 10px;
 }
 
-.header h1 {
+.menu-icon:hover {
+    background: rgba(255,255,255,0.18);
+}
+
+.header-title h2,
+.header-title p {
     margin: 0;
-    font-weight: 600;
 }
 
-.header p {
-    margin: 5px 0 0 0;
+.header-title p {
+    margin-top: 4px;
     opacity: 0.9;
 }
 
-.header::after {
-    content: "";
-    position: absolute;
-    width: 220px;
-    height: 220px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    top: -70px;
-    right: -70px;
-}
-
-/* ================= CARD ================= */
+/* CARD */
 .card {
-    background: white;
+    margin-top: 30px;
     padding: 25px;
     border-radius: 18px;
+    background: white;
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    margin-bottom: 30px;
 }
 
-/* ================= FORM ================= */
-form input,
-form select {
-    padding: 10px;
-    margin: 8px;
+/* FORM */
+input, select {
+    padding: 12px 14px;
+    border-radius: 8px;
     border: 1px solid #ccc;
-    border-radius: 8px;
 }
 
-form button {
-    padding: 10px 18px;
-    background: #2f80ed;
-    color: white;
-    border: none;
+textarea {
+    padding: 12px 14px;
     border-radius: 8px;
+    border: 1px solid #ccc;
+    resize: vertical;
+    min-height: 96px;
+    font-family: inherit;
+}
+
+.button-primary {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #4da6ff, #2f80ed);
+    color: white;
+    font-weight: 700;
     cursor: pointer;
 }
 
-/* ================= TABLE ================= */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.toolbar h3,
+.toolbar p {
+    margin: 0;
+}
+
+.toolbar p {
+    margin-top: 4px;
+    color: #567;
+}
+
+.flash-success {
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #eaf8ee;
+    color: #1d7e45;
+    font-weight: 600;
+}
+
+.status-pill {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #eaf7ee;
+    color: #1f8f4d;
+    font-weight: 600;
+}
+
+/* TABLE */
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
 }
 
 th, td {
     padding: 12px;
     text-align: center;
-    border-bottom: 1px solid #eee;
 }
 
 th {
     background: #f1f5fb;
 }
 
+/* OVERLAY */
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+}
+
+.overlay.active {
+    display: block;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 65%;
+        left: -65%;
+    }
+
+    .main.shift {
+        margin-left: 0;
+    }
+}
 </style>
 </head>
 
@@ -271,68 +315,72 @@ th {
 </div>
 
 <!-- MAIN -->
-<div class="main">
+<div class="main" id="main">
 
     <!-- HEADER -->
     <div class="header">
-        <i class="fa-solid fa-users"></i>
-        <div>
-            <h1>Data Penghuni</h1>
-            <p>Kelola data penghuni homestay</p>
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="header-title">
+                <h2>Data Penyewa</h2>
+                <p>Pendaftaran calon penyewa dan pengelolaan data sewa</p>
+            </div>
         </div>
     </div>
 
-    <!-- FORM -->
-    <div class="card">
-        <h3>Tambah Penghuni</h3>
-        <form method="POST">
-            <input type="text" name="nama" placeholder="Nama Penghuni" required>
-            <input type="text" name="ktp" placeholder="No KTP" required>
-            <input type="text" name="hp" placeholder="No HP" required>
-            <input type="text" name="alamat" placeholder="Alamat" required>
-
-            <select name="kamar" required>
-                <option value="">Pilih Kamar Kosong</option>
-                <?php while($k = mysqli_fetch_assoc($dataKamarKosong)) { ?>
-                    <option value="<?= $k['id_kamar']; ?>">
-                        <?= $k['kode_kamar']; ?>
-                    </option>
-                <?php } ?>
-            </select>
-
-            <input type="date" name="tanggal" required>
-            <button type="submit" name="tambah">Simpan</button>
-        </form>
-    </div>
+    <?php if ($flashPenyewa): ?>
+        <div class="flash-success"><?= htmlspecialchars($flashPenyewa); ?></div>
+    <?php endif; ?>
 
     <!-- TABLE -->
     <div class="card">
-        <h3>Daftar Penghuni</h3>
+        <div class="toolbar">
+            <div>
+                <h3>Data Penyewa</h3>
+                <p>Klik tombol tambah untuk membuka halaman formulir penyewa baru.</p>
+            </div>
+            <a class="button-primary" href="tambah_penyewa.php">
+                <i class="fa-solid fa-user-plus"></i> Tambah Penyewa
+            </a>
+        </div>
+
         <table>
             <tr>
                 <th>No</th>
                 <th>Nama</th>
-                <th>No KTP</th>
+                <th>KTP</th>
+                <th>File KTP</th>
                 <th>No HP</th>
-                <th>Alamat</th>
+                <th>Username Login</th>
                 <th>Kamar</th>
                 <th>Tanggal Masuk</th>
+                <th>Status</th>
                 <th>Aksi</th>
             </tr>
 
-            <?php $no = 1; while($row = mysqli_fetch_assoc($dataPenghuni)) { ?>
+            <?php $no=1; while($row = mysqli_fetch_assoc($dataPenyewa)) { ?>
             <tr>
                 <td><?= $no++; ?></td>
-                <td><?= $row['nama_penghuni']; ?></td>
-                <td><?= $row['no_ktp']; ?></td>
-                <td><?= $row['no_hp']; ?></td>
-                <td><?= $row['alamat']; ?></td>
-                <td><?= $row['kode_kamar']; ?></td>
-                <td><?= $row['tanggal_masuk']; ?></td>
+                <td><?= htmlspecialchars($row['nama']); ?></td>
+                <td><?= htmlspecialchars($row['nomor_ktp'] ?: '-'); ?></td>
                 <td>
-                    <a href="?hapus=<?= $row['id_penghuni']; ?>"
-                       onclick="return confirm('Yakin hapus data?')"
-                       style="color:red;">Hapus</a>
+                    <?php if (!empty($row['foto_ktp'])): ?>
+                        <a href="<?= htmlspecialchars($row['foto_ktp']); ?>" target="_blank">Lihat KTP</a>
+                    <?php else: ?>
+                        -
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($row['nomor_telepon']); ?></td>
+                <td><?= htmlspecialchars($row['username'] ?: '-'); ?></td>
+                <td><?= htmlspecialchars($row['nomor_kamar'] ?: '-'); ?></td>
+                <td><?= htmlspecialchars($row['tanggal_masuk']); ?></td>
+                <td><span class="status-pill"><?= htmlspecialchars($row['status_sewa']); ?></span></td>
+                <td>
+                    <a href="?hapus=<?= $row['id_penyewa']; ?>" onclick="return confirm('Hapus?')" style="color:red;">
+                        Hapus
+                    </a>
                 </td>
             </tr>
             <?php } ?>
@@ -340,5 +388,43 @@ th {
     </div>
 
 </div>
+
+<script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const main = document.getElementById("main");
+
+function syncSidebarLayout() {
+    if (window.innerWidth > 768 && sidebar.classList.contains("active")) {
+        main.classList.add("shift");
+        overlay.classList.remove("active");
+        return;
+    }
+
+    main.classList.remove("shift");
+}
+
+function toggleSidebar() {
+    sidebar.classList.toggle("active");
+
+    if (window.innerWidth <= 768) {
+        overlay.classList.toggle("active");
+    } else {
+        overlay.classList.remove("active");
+    }
+
+    syncSidebarLayout();
+}
+
+function closeSidebar() {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+    syncSidebarLayout();
+}
+
+window.addEventListener("resize", syncSidebarLayout);
+syncSidebarLayout();
+</script>
+
 </body>
 </html>

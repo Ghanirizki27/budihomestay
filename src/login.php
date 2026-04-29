@@ -1,11 +1,11 @@
 <?php
 session_start();
 include "koneksi.php";
+include_once "auth.php";
 
-// Jika sudah login, arahkan ke dashboard
+// 1. Cek jika sudah login, arahkan ke halaman yang benar sesuai role-nya
 if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
-    header("Location: dashboard.php");
-    exit;
+    redirectByRole();
 }
 
 $error = false;
@@ -19,12 +19,22 @@ if (isset($_POST['login'])) {
     if (mysqli_num_rows($query) > 0) {
         $data = mysqli_fetch_assoc($query);
 
+        // Pastikan kolom 'role' di database TIDAK NULL agar logika ini berjalan
         $_SESSION['status'] = "login";
         $_SESSION['id_admin'] = $data['id_admin'];
         $_SESSION['username'] = $data['username'];
         $_SESSION['nama'] = $data['nama_lengkap'];
+        $_SESSION['role'] = $data['role'];
 
-        header("Location: dashboard.php");
+        // 2. Logika Pembeda Akses saat berhasil login 
+        if ($data['role'] == 'admin') {
+            header("Location: dashboard.php");
+        } else if ($data['role'] == 'penyewa') {
+            header("Location: home_penyewa.php");
+        } else {
+            // Jika role tidak dikenal atau NULL
+            $error = true;
+        }
         exit;
     } else {
         $error = true;
@@ -85,21 +95,22 @@ if (isset($_POST['login'])) {
         .error-msg { color: #ff4c4c; font-size: 14px; margin-bottom: 10px; display: block; }
     </style>
 </head>
+
 <body>
 
-<div class="lamp-container">
-    <div class="wire"></div>
-    <div class="lamp-shade">
-        <div class="bulb"></div>
-        <div class="pull-string" onclick="toggleLamp()"></div>
-    </div>
+<form class="login-form" method="POST">
+
+    <!-- 🎥 LOGO VIDEO -->
+    <div class="logo">
+    <video autoplay loop muted playsinline>
+        <source src="Budi.mp4" type="video/mp4">
+    </video>
 </div>
 
-<form class="login-form" method="POST">
-    <h2>Selamat Datang</h2>
+<h2 class="title">Budi Homestay</h2>
 
     <?php if($error): ?>
-        <div class="error-msg">Username atau Password salah!</div>
+        <div class="error-msg">Username / Password salah</div>
     <?php endif; ?>
 
     <input type="text" name="username" placeholder="Username" required>
@@ -109,30 +120,13 @@ if (isset($_POST['login'])) {
         <i class="fa-solid fa-eye" id="togglePassword"></i>
     </div>
 
-    <button type="submit" name="login">Masuk</button>
+    <button name="login">Masuk</button>
 </form>
 
 <script>
-let isOn = false;
-const body = document.body;
-const loginForm = document.querySelector('.login-form');
-
-function toggleLamp() {
-    isOn = !isOn;
-    body.setAttribute('data-on', isOn);
-
-    if (isOn) {
-        gsap.to(loginForm, {opacity:1, y:0, duration:0.6});
-        loginForm.style.pointerEvents = "auto";
-    } else {
-        gsap.to(loginForm, {opacity:0, y:50, duration:0.4});
-        loginForm.style.pointerEvents = "none";
-    }
-}
-
-// Toggle password visibility
-const togglePassword = document.querySelector('#togglePassword');
-const passwordInput = document.querySelector('#password');
+// Toggle password
+const togglePassword = document.getElementById('togglePassword');
+const password = document.getElementById('password');
 
 togglePassword.addEventListener('click', function () {
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -140,13 +134,6 @@ togglePassword.addEventListener('click', function () {
     this.classList.toggle('fa-eye');
     this.classList.toggle('fa-eye-slash');
 });
-
-// Jika error, otomatis nyalakan lampu agar user bisa lihat pesan errornya
-<?php if($error): ?>
-    window.onload = function() {
-        toggleLamp();
-    };
-<?php endif; ?>
 </script>
 
 </body>
