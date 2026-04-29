@@ -76,7 +76,7 @@ $riwayat = mysqli_query($conn, "
         .main { margin-left: 0; padding: 35px; transition: 0.3s; }
         .main.shift { margin-left: 250px; }
         .header, .card { background: white; border-radius: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
-        .header { padding: 20px; display: flex; align-items: center; gap: 14px; }
+        .header { background: linear-gradient(90deg, #4da6ff, #2f80ed); color: white; padding: 20px; display: flex; align-items: center; gap: 14px; }
         .menu-icon { cursor: pointer; padding: 10px; border-radius: 10px; }
         .menu-icon:hover { background: rgba(47,128,237,0.1); }
         .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
