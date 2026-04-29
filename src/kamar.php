@@ -1,14 +1,10 @@
 <?php
 include "koneksi.php";
+include_once "admin_nav.php";
+include_once "auth.php";
 
 session_start();
-
-// Cek apakah sudah login dan apakah rolenya admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    // Jika bukan admin, arahkan balik ke login atau beri pesan error
-    header("Location:login.php");
-    exit();
-}
+requireRole('admin');
 
 /* ===============================
    TAMBAH KAMAR
@@ -98,12 +94,28 @@ body {
     background: rgba(255,255,255,0.1);
 }
 
+.sidebar a.active {
+    background: rgba(255,255,255,0.14);
+    color: #ffffff;
+    margin: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+}
+
 .menu-bawah a {
     background: #0d2c54;
 }
 
+.menu-bawah a.active {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+}
+
 /* ===== MAIN ===== */
 .main {
+    margin-left: 0;
     padding: 35px;
     transition: 0.3s;
 }
@@ -120,12 +132,28 @@ body {
     border-radius: 18px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
 .menu-icon {
     font-size: 20px;
     cursor: pointer;
     padding: 10px;
+}
+
+.menu-icon:hover {
+    background: rgba(255,255,255,0.18);
+    border-radius: 10px;
+}
+
+.header-title h2,
+.header-title p {
+    margin: 0;
+}
+
+.header-title p {
+    margin-top: 4px;
+    opacity: 0.92;
 }
 
 /* ===== CARD ===== */
@@ -208,37 +236,22 @@ th {
 
 <body>
 
-<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-    <div>
-        <h2><i class="fa-solid fa-house"></i> Budi Homestay</h2>
-
-        <a href="dashboard.php"><i class="fa-solid fa-gauge"></i> Dashboard</a>
-        <a href="kamar.php"><i class="fa-solid fa-bed"></i> Data Kamar</a>
-        <a href="penghuni.php"><i class="fa-solid fa-users"></i> Data Penyewa</a>
-        <a href="pembayaran.php"><i class="fa-solid fa-money-bill"></i> Pembayaran</a>
-        <a href="laporan.php"><i class="fa-solid fa-chart-line"></i> Laporan Keuangan</a>
-        <a href="peraturan.php"><i class="fa-solid fa-book"></i> Pengumuman</a>
-    </div>
-
-    <div class="menu-bawah">
-        <a href="logout.php">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </a>
-    </div>
-</div>
+<?php renderAdminSidebar('kamar.php'); ?>
 
 <!-- MAIN -->
 <div class="main" id="main">
 
     <!-- HEADER -->
     <div class="header">
-        <div class="menu-icon" onclick="toggleSidebar()">
-            <i class="fa-solid fa-bars"></i>
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="header-title">
+                <h2>Data Kamar</h2>
+                <p>Kelola kamar, harga sewa, dan status ketersediaan</p>
+            </div>
         </div>
-        <h2 style="margin-left:15px;"></h2>
     </div>
 
     <!-- FORM -->
@@ -286,15 +299,40 @@ th {
 </div>
 
 <script>
+const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
+const main = document.getElementById("main");
+
+function syncSidebarLayout() {
+    if (window.innerWidth > 768 && sidebar.classList.contains("active")) {
+        main.classList.add("shift");
+        overlay.classList.remove("active");
+        return;
+    }
+
+    main.classList.remove("shift");
+}
+
 function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("active");
-    document.getElementById("overlay").classList.toggle("active");
+    sidebar.classList.toggle("active");
+
+    if (window.innerWidth <= 768) {
+        overlay.classList.toggle("active");
+    } else {
+        overlay.classList.remove("active");
+    }
+
+    syncSidebarLayout();
 }
 
 function closeSidebar() {
-    document.getElementById("sidebar").classList.remove("active");
-    document.getElementById("overlay").classList.remove("active");
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+    syncSidebarLayout();
 }
+
+window.addEventListener("resize", syncSidebarLayout);
+syncSidebarLayout();
 </script>
 
 </body>

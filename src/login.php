@@ -1,15 +1,11 @@
 <?php
 session_start();
 include "koneksi.php";
+include_once "auth.php";
 
 // 1. Cek jika sudah login, arahkan ke halaman yang benar sesuai role-nya
 if (isset($_SESSION['status']) && $_SESSION['status'] == "login") {
-    if ($_SESSION['role'] == 'admin') {
-        header("Location: dashboard.php");
-    } else if ($_SESSION['role'] == 'penyewa') {
-        header("Location: home_penyewa.php"); // Ganti dengan nama file mobile kamu
-    }
-    exit;
+    redirectByRole();
 }
 
 $error = false;
@@ -36,7 +32,7 @@ if (isset($_POST['login'])) {
         if ($data['role'] == 'admin') {
             header("Location: dashboard.php");
         } else if ($data['role'] == 'penyewa') {
-            header("Location: home_penyewa.php"); // Arahkan ke halaman khusus penyewa
+            header("Location: home_penyewa.php");
         } else {
             // Jika role tidak dikenal atau NULL
             $error = true;
