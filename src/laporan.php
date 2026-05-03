@@ -104,7 +104,7 @@ $riwayat = mysqli_query($conn, "
         <div class="menu-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
         <div>
             <h2 style="margin:0;">Laporan Keuangan</h2>
-            <p style="margin:4px 0 0; color:#637892;">Pemasukan dari pembayaran dan pengeluaran operasional homestay.</p>
+            <p style="margin:4px 0 0; color:#637892;">Pemasukan dari pembayaran dan pengeluaran operasional ksort.</p>
         </div>
     </div>
 
