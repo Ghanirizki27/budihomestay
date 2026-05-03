@@ -98,14 +98,34 @@ $riwayat = mysqli_query($conn, "
     </style>
 </head>
 <body>
-<?php renderAdminSidebar('laporan.php'); ?>
-<div class="main" id="main">
-    <div class="header">
-        <div class="menu-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
-        <div>
-            <h2 style="margin:0;">Laporan Keuangan</h2>
-            <p style="margin:4px 0 0; color:#637892;">Pemasukan dari pembayaran dan pengeluaran operasional ksort.</p>
-        </div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="menu-atas">
+        <h2><i class="fa-solid fa-house"></i> Budi Homestay</h2>
+
+        <a href="dashboard.php" class="<?= ($halaman == 'dashboard.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-gauge"></i> Dashboard
+        </a>
+
+        <a href="kamar.php" class="<?= ($halaman == 'kamar.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-bed"></i> Data Kamar
+        </a>
+
+        <a href="penghuni.php" class="<?= ($halaman == 'penghuni.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-users"></i> Data Penghuni
+        </a>
+
+        <a href="pembayaran.php" class="<?= ($halaman == 'pembayaran.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-money-bill-wave"></i> Pembayaran
+        </a>
+
+        <a href="laporan.php" class="<?= ($halaman == 'laporan.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Laporan
+        </a>
+        <a href="Peraturan kost.php" class="<?= ($halaman == 'Peraturan kost.php') ? 'active' : ''; ?>">
+            <i class="fa-solid fa-chart-column"></i> Peraturan Kost
+        </a>
     </div>
 
     <?php if (isset($success_msg)): ?>
