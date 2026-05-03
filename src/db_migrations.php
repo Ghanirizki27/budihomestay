@@ -37,6 +37,16 @@ function ensureAppSchema(mysqli $conn): void
             jumlah INT NOT NULL,
             keterangan TEXT NULL
         )",
+        "CREATE TABLE IF NOT EXISTS penarikan_saldo (
+            id_penarikan INT AUTO_INCREMENT PRIMARY KEY,
+            jumlah INT NOT NULL,
+            metode ENUM('Dana','Transfer Bank','E-Wallet Lainnya') NOT NULL,
+            status ENUM('Pending','Disetujui','Ditolak','Selesai') DEFAULT 'Pending',
+            tanggal_request DATE NOT NULL,
+            tanggal_selesai DATE NULL,
+            keterangan TEXT NULL,
+            id_admin INT NULL
+        )",
         "ALTER TABLE penyewa ADD COLUMN IF NOT EXISTS nomor_ktp VARCHAR(30) NULL AFTER nama",
         "ALTER TABLE penyewa ADD COLUMN IF NOT EXISTS foto_ktp VARCHAR(255) NULL AFTER nomor_ktp",
         "ALTER TABLE penyewa ADD COLUMN IF NOT EXISTS jenis_kelamin ENUM('Laki-laki','Perempuan') NULL AFTER nomor_ktp",

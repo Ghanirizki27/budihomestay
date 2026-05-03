@@ -273,6 +273,47 @@ th {
         margin-left: 0;
     }
 }
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80%;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+
+#ktpImage {
+    width: 100%;
+    height: auto;
+}
 </style>
 </head>
 
@@ -367,7 +408,7 @@ th {
                 <td><?= htmlspecialchars($row['nomor_ktp'] ?: '-'); ?></td>
                 <td>
                     <?php if (!empty($row['foto_ktp'])): ?>
-                        <a href="<?= htmlspecialchars($row['foto_ktp']); ?>" target="_blank">Lihat KTP</a>
+                        <button onclick="showKTP('<?= htmlspecialchars($row['foto_ktp']); ?>')" style="padding: 6px 12px; border: none; border-radius: 6px; background: #4da6ff; color: white; cursor: pointer;">Lihat KTP</button>
                     <?php else: ?>
                         -
                     <?php endif; ?>
@@ -422,9 +463,24 @@ function closeSidebar() {
     syncSidebarLayout();
 }
 
+function showKTP(src) {
+    document.getElementById('ktpImage').src = src;
+    document.getElementById('ktpModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('ktpModal').style.display = 'none';
+}
+
 window.addEventListener("resize", syncSidebarLayout);
 syncSidebarLayout();
 </script>
+
+<!-- Modal for KTP -->
+<div id="ktpModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="ktpImage" src="" alt="KTP">
+</div>
 
 </body>
 </html>

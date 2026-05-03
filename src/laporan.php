@@ -9,17 +9,16 @@ requireRole('admin');
 ensureAppSchema($conn);
 
 if (isset($_POST['tambah_pengeluaran'])) {
-    $tanggal = mysqli_real_escape_string($conn, $_POST['tanggal']);
-    $jumlah = (int) $_POST['jumlah'];
-    $keterangan = mysqli_real_escape_string($conn, trim($_POST['keterangan']));
+    $tanggal = mysqli_real_escape_string($conn, $_POST['tanggal_pengeluaran']);
+    $jumlah = (int) $_POST['jumlah_pengeluaran'];
+    $keterangan = mysqli_real_escape_string($conn, trim($_POST['keterangan_pengeluaran']));
 
     mysqli_query($conn, "
         INSERT INTO transaksi_keuangan (tanggal, jenis, jumlah, keterangan)
         VALUES ('$tanggal', 'Pengeluaran', '$jumlah', '$keterangan')
     ");
 
-    header("Location: laporan.php");
-    exit;
+    $success_msg = "Pengeluaran berhasil ditambahkan!";
 }
 
 $summaryQuery = mysqli_query($conn, "
@@ -89,8 +88,12 @@ $riwayat = mysqli_query($conn, "
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eef2f7; }
         th { background: #f3f7fd; color: #103a70; }
-        .overlay { position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; top: 0; left: 0; }
-        .overlay.active { display: block; }
+        .btn-withdraw { background: linear-gradient(90deg, #4da6ff, #2f80ed); }
+        .btn-withdraw:hover { background: linear-gradient(90deg, #2f80ed, #1f6fd6); }
+        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .card-saldo { position: relative; }
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .sidebar { width: 70%; left: -70%; } .main.shift { margin-left: 0; } }
     </style>
 </head>
@@ -125,6 +128,17 @@ $riwayat = mysqli_query($conn, "
         </a>
     </div>
 
+    <?php if (isset($success_msg)): ?>
+        <div class="alert alert-success">
+            <i class="fa-solid fa-check-circle"></i> <?= htmlspecialchars($success_msg); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($error_msg)): ?>
+        <div class="alert alert-error">
+            <i class="fa-solid fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="grid">
         <div class="card">
             <h3>Total Pemasukan</h3>
@@ -134,7 +148,7 @@ $riwayat = mysqli_query($conn, "
             <h3>Total Pengeluaran</h3>
             <div class="metric">Rp <?= number_format((int) ($summary['total_pengeluaran'] ?? 0)); ?></div>
         </div>
-        <div class="card">
+        <div class="card card-saldo">
             <h3>Saldo</h3>
             <div class="metric">Rp <?= number_format((int) (($summary['total_pemasukan'] ?? 0) - ($summary['total_pengeluaran'] ?? 0))); ?></div>
         </div>
@@ -148,9 +162,9 @@ $riwayat = mysqli_query($conn, "
         <div class="card">
             <h3>Input Pengeluaran</h3>
             <form method="POST">
-                <input type="date" name="tanggal" required value="<?= date('Y-m-d'); ?>">
-                <input type="number" name="jumlah" placeholder="Jumlah pengeluaran" required min="0">
-                <textarea name="keterangan" placeholder="Keterangan pengeluaran" required></textarea>
+                <input type="date" name="tanggal_pengeluaran" required value="<?= date('Y-m-d'); ?>">
+                <input type="number" name="jumlah_pengeluaran" placeholder="Jumlah pengeluaran" required min="0" step="1000">
+                <textarea name="keterangan_pengeluaran" placeholder="Keterangan pengeluaran" required></textarea>
                 <button type="submit" name="tambah_pengeluaran">Simpan Pengeluaran</button>
             </form>
         </div>
@@ -183,11 +197,12 @@ $riwayat = mysqli_query($conn, "
 </div>
 <script>
 const sidebar = document.getElementById("sidebar");
-const overlay = document.getElementById("overlay");
 const main = document.getElementById("main");
-function syncSidebarLayout(){ if (window.innerWidth > 900 && sidebar.classList.contains("active")) { main.classList.add("shift"); overlay.classList.remove("active"); return; } main.classList.remove("shift"); }
-function toggleSidebar(){ sidebar.classList.toggle("active"); if (window.innerWidth <= 900) { overlay.classList.toggle("active"); } else { overlay.classList.remove("active"); } syncSidebarLayout(); }
-function closeSidebar(){ sidebar.classList.remove("active"); overlay.classList.remove("active"); syncSidebarLayout(); }
+
+function syncSidebarLayout(){ if (window.innerWidth > 900 && sidebar.classList.contains("active")) { main.classList.add("shift"); return; } main.classList.remove("shift"); }
+function toggleSidebar(){ sidebar.classList.toggle("active"); syncSidebarLayout(); }
+function closeSidebar(){ sidebar.classList.remove("active"); syncSidebarLayout(); }
+
 new Chart(document.getElementById('financeChart'), {
     type: 'line',
     data: {

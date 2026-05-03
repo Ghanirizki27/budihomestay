@@ -21,6 +21,24 @@ if (isset($_POST['update_status'])) {
     exit;
 }
 
+if (isset($_POST['delete_keluhan'])) {
+    $idKeluhan = (int) $_POST['id_keluhan'];
+    
+    // Cek status keluhan sebelum menghapus
+    $cekStatus = mysqli_query($conn, "SELECT status FROM laporan_keluhan WHERE id_keluhan='$idKeluhan'");
+    $keluhan_data = mysqli_fetch_assoc($cekStatus);
+    
+    // Hanya boleh menghapus jika status 'Selesai'
+    if ($keluhan_data && $keluhan_data['status'] === 'Selesai') {
+        mysqli_query($conn, "DELETE FROM laporan_keluhan WHERE id_keluhan='$idKeluhan'");
+        header("Location: keluhan_admin.php");
+        exit;
+    } else {
+        // Jika tidak berstatus Selesai, tampilkan peringatan
+        $error_msg = "Hanya keluhan dengan status 'Selesai' yang dapat dihapus!";
+    }
+}
+
 $keluhan = mysqli_query($conn, "
     SELECT laporan_keluhan.*, penyewa.nama, kamar.nomor_kamar
     FROM laporan_keluhan
@@ -52,12 +70,16 @@ $keluhan = mysqli_query($conn, "
         .menu-icon { cursor: pointer; padding: 10px; border-radius: 10px; }
         .menu-icon:hover { background: rgba(47,128,237,0.1); }
         .card { margin-top: 24px; padding: 24px; }
+        .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-error { background: #fee; color: #c33; border: 1px solid #fcc; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eef2f7; vertical-align: top; }
         th { background: #f3f7fd; color: #103a70; }
         select, button, textarea { padding: 10px 12px; border-radius: 8px; border: 1px solid #ccd7e5; font-family: inherit; }
         textarea { width: 100%; min-height: 90px; resize: vertical; box-sizing: border-box; margin-top: 10px; }
         button { background: #2f80ed; color: white; border: none; cursor: pointer; }
+        .btn-delete { background: #e74c3c; margin-left: 5px; }
+        .btn-delete:hover { background: #c0392b; }
         .overlay { position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; top: 0; left: 0; }
         .overlay.active { display: block; }
         @media (max-width: 768px) { .sidebar { width: 70%; left: -70%; } .main.shift { margin-left: 0; } }
@@ -73,6 +95,12 @@ $keluhan = mysqli_query($conn, "
             <p style="margin:4px 0 0; color:#637892;">Keluhan dari penyewa dan status penanganannya.</p>
         </div>
     </div>
+
+    <?php if (isset($error_msg)): ?>
+        <div class="card alert alert-error">
+            <i class="fa-solid fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg); ?>
+        </div>
+    <?php endif; ?>
 
     <div class="card">
         <table>
@@ -96,16 +124,26 @@ $keluhan = mysqli_query($conn, "
                     <td><?= htmlspecialchars($row['status']); ?></td>
                     <td style="text-align:left;"><?= nl2br(htmlspecialchars($row['tanggapan_admin'] ?: '-')); ?></td>
                     <td>
-                        <form method="POST">
-                            <input type="hidden" name="id_keluhan" value="<?= (int) $row['id_keluhan']; ?>">
-                            <select name="status">
-                                <option value="Diajukan" <?= $row['status'] === 'Diajukan' ? 'selected' : ''; ?>>Diajukan</option>
-                                <option value="Diproses" <?= $row['status'] === 'Diproses' ? 'selected' : ''; ?>>Diproses</option>
-                                <option value="Selesai" <?= $row['status'] === 'Selesai' ? 'selected' : ''; ?>>Selesai</option>
-                            </select>
-                            <textarea name="tanggapan_admin" placeholder="Tulis komentar atau tindak lanjut admin..."><?= htmlspecialchars($row['tanggapan_admin'] ?: ''); ?></textarea>
-                            <button type="submit" name="update_status">Simpan</button>
-                        </form>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <form method="POST" style="flex: 1;">
+                                <input type="hidden" name="id_keluhan" value="<?= (int) $row['id_keluhan']; ?>">
+                                <select name="status">
+                                    <option value="Diajukan" <?= $row['status'] === 'Diajukan' ? 'selected' : ''; ?>>Diajukan</option>
+                                    <option value="Diproses" <?= $row['status'] === 'Diproses' ? 'selected' : ''; ?>>Diproses</option>
+                                    <option value="Selesai" <?= $row['status'] === 'Selesai' ? 'selected' : ''; ?>>Selesai</option>
+                                </select>
+                                <textarea name="tanggapan_admin" placeholder="Tulis komentar atau tindak lanjut admin..."><?= htmlspecialchars($row['tanggapan_admin'] ?: ''); ?></textarea>
+                                <button type="submit" name="update_status">Simpan</button>
+                            </form>
+                            <?php if ($row['status'] === 'Selesai'): ?>
+                                <form method="POST" style="display: inline;">
+                                    <input type="hidden" name="id_keluhan" value="<?= (int) $row['id_keluhan']; ?>">
+                                    <button type="submit" name="delete_keluhan" class="btn-delete" onclick="return confirm('Apakah Anda yakin ingin menghapus keluhan ini? Tindakan ini tidak dapat dibatalkan.');">
+                                        <i class="fa-solid fa-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </td>
                 </tr>
             <?php endwhile; ?>
