@@ -16,12 +16,10 @@ function parseDendaRule(string $value): array
         [$jenis, $sanksi] = explode(DENDA_SEPARATOR, $value, 2);
         return [trim($jenis), trim($sanksi)];
     }
-
     if (strpos($value, ':') !== false) {
         [$jenis, $sanksi] = explode(':', $value, 2);
         return [trim($jenis), trim($sanksi)];
     }
-
     return [trim($value), ''];
 }
 
@@ -49,18 +47,14 @@ $ruleGroups = [
         'title' => 'Denda & Sanksi Pelanggaran',
         'icon' => 'fa-solid fa-gavel',
         'container_class' => 'rule-card full-width',
-        'list_tag' => 'ul',
+        'list_tag' => 'table',
     ],
 ];
 
 $rulesByCategory = [];
 $rulesQuery = mysqli_query($conn, "SELECT id_peraturan, kategori, isi_peraturan FROM peraturan ORDER BY kategori, id_peraturan ASC");
 while ($row = mysqli_fetch_assoc($rulesQuery)) {
-    $kategori = $row['kategori'] ?: 'Kewajiban';
-    if (!isset($rulesByCategory[$kategori])) {
-        $rulesByCategory[$kategori] = [];
-    }
-    $rulesByCategory[$kategori][] = $row;
+    $rulesByCategory[$row['kategori'] ?: 'Kewajiban'][] = $row;
 }
 ?>
 <!DOCTYPE html>
@@ -68,300 +62,145 @@ while ($row = mysqli_fetch_assoc($rulesQuery)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peraturan Kost - Budi Homestay</title>
+    <title>Tata Tertib - Budi Homestay</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #eaf3ff, #f8fbff);
-        }
-
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            background: linear-gradient(180deg, #0f2f59, #123d75);
-            position: fixed;
-            left: -250px;
-            top: 0;
-            transition: 0.3s;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
-            z-index: 1000;
-        }
-
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #eaf3ff, #f8fbff); color: #13355f; }
+        
+        /* SIDEBAR KONSISTEN */
+        .sidebar { width: 250px; height: 100vh; background: linear-gradient(180deg, #0f2f59, #123d75); position: fixed; left: -250px; top: 0; transition: 0.3s; z-index: 1000; display: flex; flex-direction: column; justify-content: space-between; }
         .sidebar.active { left: 0; }
-        .sidebar h2 { text-align: center; padding: 20px 10px; margin: 0; }
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            color: #dbe9ff;
-            text-decoration: none;
-            transition: 0.3s;
-        }
-
-        .sidebar a:hover {
-            background: rgba(255,255,255,0.1);
-            padding-left: 28px;
-        }
-
-        .sidebar a.active {
-            background: rgba(255,255,255,0.14);
-            color: #ffffff;
-            margin: 6px 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 14px;
-            backdrop-filter: blur(6px);
-        }
-
-        .menu-bawah a { background: #0d2c54; }
-
-        .main {
-            margin-left: 0;
-            padding: 35px;
-            transition: 0.3s;
-        }
-
+        .sidebar h2 { color: white; text-align: center; padding: 20px; margin: 0; font-size: 22px; }
+        .sidebar a { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: #dbe9ff; text-decoration: none; }
+        .sidebar a.active { background: rgba(255,255,255,0.14); color: #ffffff; margin: 6px 12px; border-radius: 14px; }
+        .menu-bawah a { background: #081b33; } 
+        
+        .overlay { position: fixed; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; top: 0; left: 0; z-index: 999; }
+        .overlay.active { display: block; }
+        .main { margin-left: 0; padding: 35px; transition: 0.3s; }
         .main.shift { margin-left: 250px; }
+        
+        /* HEADER KONSISTEN */
+        .header { background: linear-gradient(120deg, #1f4f8f, #2f80ed); color: white; border-radius: 24px; padding: 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; box-shadow: 0 18px 35px rgba(47,128,237,0.25); }
+        .menu-icon { cursor: pointer; padding: 10px; border-radius: 10px; font-size: 20px; background: rgba(255,255,255,0.15); display: flex; align-items: center; }
 
-        .header {
-            background: linear-gradient(90deg, #4da6ff, #2f80ed);
-            color: white;
-            padding: 22px 26px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            box-shadow: 0 10px 20px rgba(47,128,237,0.2);
-            margin-bottom: 30px;
-        }
+        /* RULE CARDS */
+        .rule-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 24px; }
+        .rule-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 12px 28px rgba(18,61,117,0.08); border: none; }
+        .full-width { grid-column: span 2; }
+        
+        /* ALERT BOX (LARANGAN) */
+        .alert-box { background: #fffcfc; border-left: 6px solid #eb5757; border-radius: 20px; padding: 25px; grid-column: span 2; box-shadow: 0 12px 28px rgba(18,61,117,0.08); }
+        
+        h3 { margin-top: 0; color: #0f3c74; font-size: 18px; border-bottom: 2px solid #f0f4f8; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .alert-box h3 { color: #c0392b !important; }
 
-        .menu-icon { cursor: pointer; font-size: 20px; padding: 10px; }
-        .header-text h1, .header-text p { margin: 0; }
-        .header-text p { margin-top: 6px; }
-
-        .rule-container {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 25px;
-        }
-
-        .rule-card,
-        .alert-box {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .full-width,
-        .alert-box {
-            grid-column: span 2;
-        }
-
-        .alert-box {
-            background: #fff5f5;
-            border-left: 5px solid #ff4d4d;
-            color: #c0392b;
-        }
-
-        .rule-card h3,
-        .alert-box h3 {
-            margin-top: 0;
-            color: #123d75;
-            border-bottom: 2px solid #4da6ff;
-            padding-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .alert-box h3 {
-            color: #c0392b;
-            border-bottom-color: rgba(255,77,77,0.35);
-        }
-
-        .rule-list {
-            padding-left: 20px;
-            line-height: 1.8;
-            color: #444;
-            margin: 0;
-        }
-
+        .rule-list { padding-left: 20px; line-height: 1.8; color: #444; }
         .rule-list li { margin-bottom: 10px; }
 
-        .rule-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            margin-top: 10px;
-        }
+        /* TABLE FOR DENDA */
+        .rule-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .rule-table th { text-align: left; background: #f8fbff; padding: 15px; color: #5c6f87; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #edf2f7; }
+        .rule-table td { padding: 15px; border-bottom: 1px solid #f0f4f8; font-size: 14px; }
 
-        .rule-table th,
-        .rule-table td {
-            padding: 12px 14px;
-            border: 1px solid #eaf0f7;
-            text-align: left;
-            vertical-align: top;
-        }
+        .empty-note { color: #6e7f95; font-style: italic; font-size: 14px; text-align: center; padding: 20px; }
+        .footer-note { margin-top: 40px; text-align: center; color: #6e7f95; font-style: italic; font-size: 13px; }
 
-        .rule-table th {
-            background: #f8fbff;
-            color: #123d75;
-        }
-
-        .empty-note {
-            margin: 0;
-            color: #6f8094;
-            font-style: italic;
-        }
-
-        .footer-note {
-            margin-top: 30px;
-            text-align: center;
-            color: #888;
-            font-style: italic;
-        }
-
-        .overlay {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.4);
-            display: none;
-            top: 0;
-            left: 0;
-            z-index: 999;
-        }
-
-        .overlay.active { display: block; }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 70%;
-                left: -70%;
-            }
-
-            .rule-container {
-                grid-template-columns: 1fr;
-            }
-
-            .alert-box,
-            .full-width {
-                grid-column: span 1;
-            }
-
-            .main {
-                padding: 20px;
-            }
-
-            .main.shift {
-                margin-left: 0;
-            }
-        }
+        @media (max-width: 900px) { .rule-container { grid-template-columns: 1fr; } .full-width, .alert-box { grid-column: span 1; } .main.shift { margin-left: 0; } .header { flex-direction: column; align-items: flex-start; } .header-info-right { text-align: left !important; margin-top: 15px; } }
     </style>
 </head>
 <body>
-<?php renderTenantSidebar('penyewa_peraturan.php'); ?>
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+    <?php renderTenantSidebar('penyewa_peraturan.php'); ?>
 
-<div class="main" id="main">
-    <div class="header">
-        <div class="menu-icon" onclick="toggleSidebar()">
-            <i class="fa-solid fa-bars"></i>
-        </div>
-        <i class="fa-solid fa-clipboard-list" style="font-size: 34px;"></i>
-        <div class="header-text">
-            <h1>Tata Tertib & Peraturan</h1>
-            <p>Harap dipatuhi demi kenyamanan bersama di Budi Homestay</p>
-        </div>
-    </div>
-
-    <div class="rule-container">
-        <?php foreach ($ruleGroups as $categoryKey => $config): ?>
-            <?php
-            $listTag = $config['list_tag'];
-            $items = $rulesByCategory[$categoryKey] ?? [];
-            ?>
-            <div class="<?= htmlspecialchars($config['container_class']); ?>">
-                <h3><i class="<?= htmlspecialchars($config['icon']); ?>"></i> <?= htmlspecialchars($config['title']); ?></h3>
-                <?php if (!empty($config['description'])): ?>
-                    <p><?= htmlspecialchars($config['description']); ?></p>
-                <?php endif; ?>
-
-                <?php if ($categoryKey === 'Denda & Sanksi'): ?>
-                    <table class="rule-table" style="<?= empty($items) ? 'display:none;' : ''; ?>">
-                        <thead>
-                            <tr>
-                                <th>Jenis Pelanggaran</th>
-                                <th>Sanksi / Denda</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($items as $rule): ?>
-                                <?php [$jenisPelanggaran, $sanksiDenda] = parseDendaRule($rule['isi_peraturan']); ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($jenisPelanggaran); ?></td>
-                                    <td><?= htmlspecialchars($sanksiDenda); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php else: ?>
-                    <<?= $listTag; ?> class="rule-list" style="<?= empty($items) ? 'display:none;' : ''; ?>">
-                        <?php foreach ($items as $rule): ?>
-                            <li><?= htmlspecialchars($rule['isi_peraturan']); ?></li>
-                        <?php endforeach; ?>
-                    </<?= $listTag; ?>>
-                <?php endif; ?>
-                <p class="empty-note" style="<?= empty($items) ? '' : 'display:none;'; ?>">Belum ada aturan di bagian ini.</p>
+    <div class="main" id="main">
+        <!-- HEADER KONSISTEN -->
+        <div class="header">
+            <div style="display:flex; align-items:center; gap:18px;">
+                <div class="menu-icon" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
+                <div>
+                    <h1 style="font-size: 24px; margin:0;">Tata Tertib & Peraturan</h1>
+                    <p style="margin:5px 0 0; opacity:0.8; font-size: 14px;">Wajib dipatuhi seluruh penghuni demi kenyamanan bersama di Budi Homestay.</p>
+                </div>
             </div>
-        <?php endforeach; ?>
+            <div class="header-info-right" style="text-align: right;">
+                <div id="tanggal" style="font-weight: 600; font-size: 13px;"></div>
+                <div id="waktu" style="font-size: 22px; font-weight: 800; margin: 2px 0;"></div>
+                <div style="opacity: 0.8; font-size: 12px; font-weight: 600;">Akun Penyewa</div>
+            </div>
+        </div>
+
+        <div class="rule-container">
+            <?php foreach ($ruleGroups as $categoryKey => $config): 
+                $items = $rulesByCategory[$categoryKey] ?? []; ?>
+                
+                <div class="<?= $config['container_class']; ?>">
+                    <h3><i class="<?= $config['icon']; ?>"></i> <?= $config['title']; ?></h3>
+                    
+                    <?php if (!empty($config['description'])): ?>
+                        <p style="font-size: 14px; margin-top: 0; margin-bottom: 15px; color: #c0392b;"><?= $config['description']; ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($config['list_tag'] === 'table'): ?>
+                        <?php if (!empty($items)): ?>
+                            <div style="overflow-x: auto;">
+                                <table class="rule-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Jenis Pelanggaran</th>
+                                            <th>Sanksi / Denda</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($items as $rule): 
+                                            [$jenis, $sanksi] = parseDendaRule($rule['isi_peraturan']); ?>
+                                            <tr>
+                                                <td><strong><?= htmlspecialchars($jenis); ?></strong></td>
+                                                <td style="color: #eb5757; font-weight: 700;"><?= htmlspecialchars($sanksi); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="empty-note">Belum ada aturan denda yang ditetapkan.</p>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <?php if (!empty($items)): ?>
+                            <<?= $config['list_tag']; ?> class="rule-list">
+                                <?php foreach ($items as $rule): ?>
+                                    <li><?= htmlspecialchars($rule['isi_peraturan']); ?></li>
+                                <?php endforeach; ?>
+                            </<?= $config['list_tag']; ?>>
+                        <?php else: ?>
+                            <p class="empty-note">Belum ada aturan di kategori ini.</p>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <p class="footer-note">Peraturan di atas bersifat mengikat dan dapat diperbarui sewaktu-waktu oleh pihak pengelola.</p>
     </div>
 
-    <p class="footer-note">Peraturan ini dapat berubah sewaktu-waktu sesuai kebijakan pengelola Budi Homestay.</p>
-</div>
+    <script>
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const main = document.getElementById("main");
 
-<script>
-const sidebar = document.getElementById("sidebar");
-const overlay = document.getElementById("overlay");
-const main = document.getElementById("main");
+    function syncSidebarLayout() { if (window.innerWidth > 900 && sidebar.classList.contains("active")) { main.classList.add("shift"); return; } main.classList.remove("shift"); }
+    function toggleSidebar() { sidebar.classList.toggle("active"); if (window.innerWidth <= 900) { overlay.classList.toggle("active"); } syncSidebarLayout(); }
+    function closeSidebar() { sidebar.classList.remove("active"); overlay.classList.remove("active"); syncSidebarLayout(); }
 
-function syncSidebarLayout() {
-    if (window.innerWidth > 768 && sidebar.classList.contains("active")) {
-        main.classList.add("shift");
-        overlay.classList.remove("active");
-        return;
+    function updateDateTime() {
+        const skrg = new Date();
+        document.getElementById("tanggal").textContent = skrg.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById("waktu").textContent = skrg.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
+    setInterval(updateDateTime, 1000); updateDateTime();
 
-    main.classList.remove("shift");
-}
-
-function toggleSidebar() {
-    sidebar.classList.toggle("active");
-
-    if (window.innerWidth <= 768) {
-        overlay.classList.toggle("active");
-    } else {
-        overlay.classList.remove("active");
-    }
-
+    window.addEventListener("resize", syncSidebarLayout);
     syncSidebarLayout();
-}
-
-function closeSidebar() {
-    sidebar.classList.remove("active");
-    overlay.classList.remove("active");
-    syncSidebarLayout();
-}
-
-window.addEventListener("resize", syncSidebarLayout);
-syncSidebarLayout();
-</script>
-
+    </script>
 </body>
 </html>
