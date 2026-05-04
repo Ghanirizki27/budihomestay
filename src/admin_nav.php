@@ -8,6 +8,10 @@ function renderAdminSidebar(string $activePage): void
         ['href' => 'pembayaran.php', 'icon' => 'fa-solid fa-money-bill-wave', 'label' => 'Pembayaran'],
         ['href' => 'keluhan_admin.php', 'icon' => 'fa-solid fa-comments', 'label' => 'Keluhan'],
         ['href' => 'laporan.php', 'icon' => 'fa-solid fa-chart-line', 'label' => 'Laporan Keuangan'],
+        
+        // --- TAMBAHAN MENU BARU DI SINI ---
+        ['href' => 'admin_metode.php', 'icon' => 'fa-solid fa-credit-card', 'label' => 'Metode Pembayaran'],
+        
         ['href' => 'pengumuman.php', 'icon' => 'fa-solid fa-bullhorn', 'label' => 'Pengumuman'],
         ['href' => 'peraturan.php', 'icon' => 'fa-solid fa-book', 'label' => 'Peraturan Kost'],
     ];

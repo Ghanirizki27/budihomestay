@@ -24,47 +24,43 @@ function getLoggedInTenant(mysqli $conn): ?array
     return $tenant ?: null;
 }
 
-function getTenantPaymentSummary(mysqli $conn, int $idPenyewa, ?string $tanggalMasuk): array
-{
-    $summary = [
-        'pembayaran_terakhir' => null,
-        'jatuh_tempo' => null,
-        'status_label' => 'Belum terhubung',
-        'status_class' => 'status-wait',
-    ];
-
-    if ($idPenyewa <= 0 || empty($tanggalMasuk)) {
-        return $summary;
-    }
-
-    $lastPaymentQuery = mysqli_query($conn, "
-        SELECT tanggal_bayar
-        FROM pembayaran
-        WHERE id_penyewa = '$idPenyewa' AND status = 'Divalidasi'
-        ORDER BY tanggal_bayar DESC
-        LIMIT 1
+function getTenantPaymentSummary($conn, $id_penyewa, $tanggal_masuk) {
+    $sekarang = new DateTime();
+    
+    // 1. Cari pembayaran terakhir yang sudah LUNAS
+    $query_lunas = mysqli_query($conn, "
+        SELECT jatuh_tempo 
+        FROM pembayaran 
+        WHERE id_penyewa = '$id_penyewa' AND status = 'Lunas' 
+        ORDER BY jatuh_tempo DESC LIMIT 1
     ");
-    $lastPayment = mysqli_fetch_assoc($lastPaymentQuery);
-    $pembayaranTerakhir = $lastPayment['tanggal_bayar'] ?? null;
-    $baseDate = $pembayaranTerakhir ?: $tanggalMasuk;
-    $jatuhTempo = date('Y-m-d', strtotime($baseDate . ' +1 month'));
-    $hariIni = date('Y-m-d');
-    $selisihHari = (int) floor((strtotime($hariIni) - strtotime($jatuhTempo)) / 86400);
+    $data_lunas = mysqli_fetch_assoc($query_lunas);
 
-    $statusLabel = 'Aktif';
-    $statusClass = 'status-ok';
-    if ($selisihHari > 0) {
-        $statusLabel = 'Terlambat ' . $selisihHari . ' hari';
-        $statusClass = 'status-late';
-    } elseif ($hariIni === $jatuhTempo) {
-        $statusLabel = 'Jatuh tempo hari ini';
-        $statusClass = 'status-due';
+    if ($data_lunas) {
+        // Jika ada yang lunas, jatuh tempo berikutnya adalah +1 bulan dari yang terakhir dibayar
+        $last_paid_date = new DateTime($data_lunas['jatuh_tempo']);
+        $next_due = clone $last_paid_date;
+        $next_due->modify('+1 month');
+    } else {
+        // Jika belum pernah bayar lunas, jatuh tempo adalah tanggal masuk
+        $next_due = new DateTime($tanggal_masuk);
     }
 
-    $summary['pembayaran_terakhir'] = $pembayaranTerakhir;
-    $summary['jatuh_tempo'] = $jatuhTempo;
-    $summary['status_label'] = $statusLabel;
-    $summary['status_class'] = $statusClass;
+    $diff = $sekarang->diff($next_due);
+    $is_late = $sekarang > $next_due && $diff->days > 0;
+    
+    // Tentukan Label dan Class CSS
+    if ($is_late) {
+        $status_label = "Terlambat " . $diff->days . " hari";
+        $status_class = "status-late";
+    } else {
+        $status_label = "Aman (" . $next_due->format('d M Y') . ")";
+        $status_class = "status-ok";
+    }
 
-    return $summary;
+    return [
+        'jatuh_tempo' => $next_due->format('Y-m-d'),
+        'status_label' => $status_label,
+        'status_class' => $status_class
+    ];
 }
